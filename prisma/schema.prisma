@@ -1,0 +1,66 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL_NON_POOLING")
+}
+
+model User {
+  id                  Int                   @id @default(autoincrement())
+  email               String                @unique
+  name                String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  active              Boolean               @default(true)
+  // Google Auth fields
+  googleId            String?
+  provider            String? // Optional, if you want to differentiate between providers
+  picture             String?
+  InterviewSession    InterviewSession[]
+  UserSessionProperty UserSessionProperty[]
+}
+
+model InterviewSession {
+  id                  Int                   @id @default(autoincrement())
+  user                User                  @relation(fields: [userId], references: [id])
+  userId              Int
+  sessionId           String                @unique
+  createdAt           DateTime              @default(now())
+  startedAt           DateTime?
+  completedAt         DateTime?
+  UserSessionProperty UserSessionProperty[]
+}
+
+model UserSessionProperty {
+  id        Int              @id @default(autoincrement())
+  user      User             @relation(fields: [userId], references: [id])
+  userId    Int
+  session   InterviewSession @relation(fields: [sessionId], references: [id])
+  sessionId Int
+}
+
+model roles {
+  id   Int    @id @default(autoincrement())
+  role String
+}
+
+model programing_language {
+  id   Int    @id @default(autoincrement())
+  name String
+}
+
+model companies {
+  id            Int    @id @default(autoincrement())
+  name          String
+  favicon_image String
+}
+
+model technology_used {
+  id   Int    @id @default(autoincrement())
+  name String
+}

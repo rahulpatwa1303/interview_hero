@@ -1,6 +1,8 @@
+import NextAuthProvider from "@/provider/NextAuthProvider";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import AppBar from "@/components/custom/AppBar/AppBar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -16,7 +18,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body
+        className={`${inter.className} bg-light-surface dark:bg-dark-surface `}
+      >
+        <NextAuthProvider>
+          <div className="flex flex-col h-screen">
+            <AppBar />
+            <div className="flex-grow">{children}</div>
+          </div>
+        </NextAuthProvider>
+      </body>
     </html>
   );
 }
