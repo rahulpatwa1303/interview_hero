@@ -8,7 +8,8 @@ interface input {
   label: string;
   updateAction: Dispatch<Actions>;
   createdDispatchType: any;
-  name:string
+  name: string;
+  error?: string;
 }
 
 interface multiSelectinput {
@@ -19,17 +20,29 @@ interface multiSelectinput {
   model: string;
   createdDispatchType: any;
   deleteDispatchType: any;
-  name:string
+  name: string;
+  error?: string;
+  maxLength: number,
+  grid:string
 }
 
-function ClientSelection({ label,updateAction,createdDispatchType,name }: input) {
+function ClientSelection({
+  label,
+  updateAction,
+  createdDispatchType,
+  name,
+  error,
+}: input) {
   const onChange = (event: {}) => {
     updateAction({ type: createdDispatchType, payload: event });
   };
 
   return (
     <div className="flex flex-col w-full max-w-sm gap-2 items-start">
-      <label htmlFor="email" className="mx-2">
+      <label
+        htmlFor="email"
+        className={`mx-2 ${error && "text-light-error dark:text-dark-primary"}`}
+      >
         {label}
       </label>
       <Autocomplete
@@ -37,7 +50,17 @@ function ClientSelection({ label,updateAction,createdDispatchType,name }: input)
         onChange={(e) => onChange(e)}
         options={[]}
         name={name}
-        />
+        error={error}
+      />
+      {error && (
+        <p
+          className={`text-xs ${
+            error && "text-light-error dark:text-dark-onSurfaceVariant"
+          }`}
+        >
+          {error}
+        </p>
+      )}
     </div>
   );
 }
@@ -50,19 +73,26 @@ function ClientMultiSelection({
   elementData,
   createdDispatchType,
   deleteDispatchType,
-  name
+  name,
+  error,
+  maxLength,
+  grid
 }: multiSelectinput) {
   const onChange = (event: string) => {
+    if(elementData.length >= maxLength) return  
     updateAction({ type: createdDispatchType, payload: event });
   };
-  
+
   const removeItem = (value: string) => {
     updateAction({ type: deleteDispatchType, payload: value });
   };
 
   return (
     <div className="flex flex-col w-full  gap-2 items-start">
-      <label htmlFor="email" className="mx-2">
+      <label
+        htmlFor="email"
+        className={`mx-2 ${error && "text-light-error dark:text-dark-primary"}`}
+      >
         {label}
       </label>
       <MultiSelect
@@ -72,11 +102,16 @@ function ClientMultiSelection({
         model={model}
         placeholder="Type to search..."
         name={name}
-        />
-      <p className="text-light-onSurface/50 dark:text-dark-onSurface/50 ">
+        error={error}
+      />
+      <p className={`text-light-onSurface/50 dark:text-dark-onSurface/50 ${elementData.length >= maxLength && '!text-light-error dark:!text-dark-primary'}`}>
         {hint}
       </p>
-      <section className={`chips grid grid-cols-2 gap-2 ${elementData.length === 0 && 'hidden'}`}>
+      <section
+        className={`chips grid grid-cols-2 gap-2 ${
+          elementData.length === 0 && "hidden"
+        } ${grid}`}
+      >
         {elementData.map((item, index) => (
           <ChipComponent
             lable={item}
@@ -85,6 +120,15 @@ function ClientMultiSelection({
           />
         ))}
       </section>
+      {error && (
+        <p
+          className={`text-xs ${
+            error && "text-light-error dark:text-dark-onSurfaceVariant"
+          }`}
+        >
+          {error}
+        </p>
+      )}
     </div>
   );
 }

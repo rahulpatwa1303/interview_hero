@@ -17,6 +17,5 @@ export const GET = async (req: NextRequest) => {
       },
     },
   });
-  console.log('suggestion',suggestion)
   return NextResponse.json(suggestion);
 };

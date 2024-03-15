@@ -1,13 +1,10 @@
-import React from "react";
-import { Button } from "@/components/ui/button";
 // import { usePathname } from "next/navigation";
-import { headers } from "next/headers";
-import { Suspense } from "react";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getSession } from "next-auth/react";
 import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import prisma from "../../../../prisma";
+import { ActionButton } from "../_components";
+
 
 async function GetStarted() {
   const slides = [
@@ -62,9 +59,7 @@ async function GetStarted() {
             aspirations?
           </p>
           <form action={createSession}>
-            <Button className="bg-light-primary dark:bg-dark-primary text-light-onPrimary dark:text-dark-onPrimary hover:bg-light-primary/70 hover:dark:bg-dark-primary/70">
-              Let's Start!
-            </Button>
+            <ActionButton/>
           </form>
         </div>
       </div>

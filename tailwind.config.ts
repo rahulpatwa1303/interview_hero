@@ -19,7 +19,9 @@ const config = {
         onPrimary:'#FFFFFF',
         secondaryContainer:'#E8DEF8',
         onSecondaryContainer:'#1D192B',
-        outline:'#79747E'
+        outline:'#79747E',
+        error:'#B3261E',
+        backgroundQTag:'#6b4cf6'
       },
       dark: {
         surface: "#141218",
@@ -30,7 +32,9 @@ const config = {
         onPrimary:'#381E72',
         secondaryContainer:'#4A4458',
         onSecondaryContainer:'#E8DEF8',
+        onSurfaceVariant:'#CAC4D0',
         outline:'#938F99',
+        backgroundQTag:'#6b4cf6'
       },
     },
     container: {

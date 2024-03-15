@@ -1,7 +1,7 @@
 "use client";
 
 import InputWithLabel from "@/components/custom/InputWithLabel/InputWithLabel";
-import React, { useReducer } from "react";
+import React, { useReducer, useState } from "react";
 import { ClientMultiSelection, ClientSelection } from "./ClientSelection";
 import { useSession } from "next-auth/react";
 import { ActionType, Actions, FormDataState } from "@/lib/Types";
@@ -17,8 +17,8 @@ function Form() {
   const id = path.split("/")[2];
 
   const initalFormData = {
-    name: session?.user?.name || "",
-    yoe: 0,
+    name: session?.user?.name,
+    yoe: null,
     current_role: "",
     desired_role: "",
     preferred_programming_lang: [],
@@ -78,7 +78,7 @@ function Form() {
           desired_companies: [...state.desired_companies, action.payload],
         };
       case ActionType.DELETE_TECH_USED:
-        const udpatedTechUsedelete = state.desired_companies.filter(
+        const udpatedTechUsedelete = state.technologies_used.filter(
           (item) => item !== action.payload
         );
         return {
@@ -97,19 +97,41 @@ function Form() {
 
   const [formData, dispatch] = useReducer(reducer, initalFormData);
 
-  // const [state, formAction] = useFormState(setCandidateInfo, initalFormData);
-  const updateUserWithId = setCandidateInfo.bind(null, id)
+  const [formDataError, setFormDataError] = useState({} as any);
 
+  const handleSubmit = () => {
+    const error: any = {};
+    if (!formData.yoe) error.yoe = "Year of experience is required";
+    if (!formData.current_role) error.current_role = "Current role is required";
+    if (!formData.desired_role) error.desired_role = "Desired role is required";
+
+    if (formData.preferred_programming_lang.length === 0)
+      error.preferred_programming_lang =
+        "Need to select at least one programming language";
+
+    if (formData.desired_companies.length === 0)
+      error.desired_companies = "Need to select at least one dream company";
+
+    if (formData.technologies_used.length === 0)
+      error.technologies_used =
+        "Need to select at least one technology that you are familiar with";
+
+    setFormDataError(error);
+
+    if (Object.keys(error).length === 0) {
+      setCandidateInfo(formData);
+    }
+  };
 
   return (
-    <form action={updateUserWithId}>
+    <form action={handleSubmit}>
       <div className="space-y-6">
         <div className="flex flex-row gap-8">
           <InputWithLabel
             inputType="text"
             id="name"
             name="name"
-            inputValue={session?.user?.name as string}
+            inputValue={initalFormData.name}
             placeholder="Name"
             readOnly={true}
             label="Name"
@@ -118,10 +140,13 @@ function Form() {
             inputType="number"
             id="years_of_experience"
             name="yoe"
-            inputValue={""}
+            inputValue={initalFormData.yoe}
             placeholder="Ex: 2,3,4,11..."
             label="Current work experience"
             readOnly={false}
+            onChange={dispatch}
+            createdDispatchType={ActionType.UPDATE_YOE}
+            error={formDataError.yoe}
           />
         </div>
         <div className="flex flex-row gap-8">
@@ -130,12 +155,14 @@ function Form() {
             updateAction={dispatch}
             createdDispatchType={ActionType.UPDATE_CURRENT_ROLE}
             name="current_role"
+            error={formDataError.current_role}
           />
           <ClientSelection
             label="Desired Role"
             updateAction={dispatch}
             createdDispatchType={ActionType.UPDATE_DESIRED_ROLE}
             name="desired_role"
+            error={formDataError.desired_role}
           />
         </div>
         <div className="flex flex-row gap-8">
@@ -148,7 +175,10 @@ function Form() {
             createdDispatchType={ActionType.UPDATE_PROG_LANGUAGE}
             deleteDispatchType={ActionType.DELETE_PROG_LANGUAGE}
             name="preferred_programming_lang"
-          />
+            error={formDataError.preferred_programming_lang}
+            maxLength={5}
+            grid="grid-cols-2"
+            />
           <ClientMultiSelection
             label="Dream Companies"
             hint="You can add max. 5"
@@ -158,6 +188,9 @@ function Form() {
             createdDispatchType={ActionType.UPDATE_DESIRED_COMP}
             deleteDispatchType={ActionType.DELETE_DESIRED_COMP}
             name="desired_companies"
+            error={formDataError.desired_companies}
+            maxLength={5}
+            grid="grid-cols-2"
           />
         </div>
         <div className="w-full">
@@ -170,6 +203,9 @@ function Form() {
             createdDispatchType={ActionType.UPDATE_TECH_USED}
             deleteDispatchType={ActionType.DELETE_TECH_USED}
             name="technologies_used"
+            error={formDataError.technologies_used}
+            maxLength={10}
+            grid="grid-cols-5"
           />
         </div>
       </div>

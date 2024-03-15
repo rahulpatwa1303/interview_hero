@@ -1,12 +1,14 @@
-export type FormDataState = {
-  technologies_used: any;
-  name: string;
-  yoe: number;
+export interface FormDataState {
+  name: string; // Ensures 'name' is always a string
+  yoe: number; // Adjust the type based on your data
   current_role: string;
   desired_role: string;
   preferred_programming_lang: string[];
   desired_companies: string[];
-};
+  technologies_used: string[];
+  interview_id: string;
+}
+
 
 export enum ActionType {
   UPDATE_YOE = "UPDATE_YOE",
@@ -20,9 +22,10 @@ export enum ActionType {
   DELETE_TECH_USED="DELETE_TECH_USED"
 }
 
-export interface Actions {
-  type: ActionType;
-  payload: any;
-}
+export type Actions = {
+  // Define the action types and properties as needed
+  type: string; // Action type (e.g., 'UPDATE_NAME')
+  payload?: any; // Optional payload for additional data
+};
 
 export type Dispatch<Action> = (action: Action) => void;

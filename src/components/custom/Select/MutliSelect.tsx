@@ -15,6 +15,7 @@ const MultiSelect: React.FC<Props> = ({
   placeholder,
   width = "w-40",
   name,
+  error,
 }) => {
   const [focus, setFocus] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -79,7 +80,7 @@ const MultiSelect: React.FC<Props> = ({
         {isLoading ? "Loading..." : "No suggestions found"}
       </div>
     );
-      console.log('namenamename',name)
+
   return (
     <div className="relative w-full">
       <input
@@ -90,9 +91,11 @@ const MultiSelect: React.FC<Props> = ({
         onFocus={() => setFocus(true)}
         onBlur={() => setFocus(false)}
         name={name}
-        className="bg-light-surfaceContainerHighest dark:bg-dark-surfaceContainerHighest
+        className={`bg-light-surfaceContainerHighest dark:bg-dark-surfaceContainerHighest
         outline-light-outline  dark:outline-dark-outline outline
-        focus:outline-light-primary  dark:focus:outline-dark-primary outline-none py-2 px-4 rounded-lg w-full"
+        focus:outline-light-primary  dark:focus:outline-dark-primary outline-none py-2 px-4 rounded-lg w-full ${
+          error && "!outline-light-error dark:!outline-dark-primary"
+        }`}
       />
       {isLoading && (
         <span className="absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
@@ -112,6 +115,7 @@ type Props = {
   model: string;
   width?: string;
   name: string;
+  error?: string;
 };
 
 export default MultiSelect;

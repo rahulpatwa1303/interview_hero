@@ -6,7 +6,7 @@ interface Option {
   role: string; // Type for suggestion object
 }
 
-const Autocomplete: React.FC<Props> = ({ initialValue, options, onChange,name }) => {
+const Autocomplete: React.FC<Props> = ({ initialValue, options, onChange,name,error }) => {
   const [focus, setFocus] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState(initialValue || "");
   const [suggestions, setSuggestions] = useState<Option[]>([]);
@@ -73,9 +73,11 @@ const Autocomplete: React.FC<Props> = ({ initialValue, options, onChange,name })
         onFocus={() => setFocus(true)}
         onBlur={() => setFocus(false)}
         placeholder="Type to search..."
-        className="bg-light-surfaceContainerHighest dark:bg-dark-surfaceContainerHighest
+        className={`bg-light-surfaceContainerHighest dark:bg-dark-surfaceContainerHighest
         outline-light-outline  dark:outline-dark-outline outline
-        focus:outline-light-primary  dark:focus:outline-dark-primary outline-none py-2 px-4 rounded-lg"
+        focus:outline-light-primary  dark:focus:outline-dark-primary outline-none py-2 px-4 rounded-lg ${
+          error && "!outline-light-error dark:!outline-dark-primary"
+        }`}
         name={name}
       />
       {isLoading && (
@@ -93,6 +95,7 @@ type Props = {
   options: Option[];
   onChange: (suggestion: Option) => void;
   name:string
+  error?:string
 };
 
 export default Autocomplete;

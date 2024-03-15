@@ -34,6 +34,7 @@ model InterviewSession {
   startedAt           DateTime?
   completedAt         DateTime?
   UserSessionProperty UserSessionProperty[]
+  interview_question  interview_question[]
 }
 
 model UserSessionProperty {
@@ -63,4 +64,43 @@ model companies {
 model technology_used {
   id   Int    @id @default(autoincrement())
   name String
+}
+
+model candidate_info {
+  id          Int     @id @default(autoincrement())
+  name        String
+  yoe         Int
+  currentRole String
+  desiredRole String?
+
+  programmingLanguages String
+
+  desiredCompanies String
+
+  technologiesUsed String
+
+  interviewId String    @unique
+  startDate   DateTime?
+  duration    String?
+  endDate     DateTime?
+
+  // Additional fields as needed
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model interview_question {
+  id                 Int               @id @default(autoincrement())
+  interviewId        String
+  questionId         Int
+  time               Int
+  type               String
+  queston            String
+  answer             String?
+  answerScore        Int?
+  answeredAt         DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @default(now())
+  InterviewSession   InterviewSession? @relation(fields: [interviewSessionId], references: [id])
+  interviewSessionId Int?
 }
