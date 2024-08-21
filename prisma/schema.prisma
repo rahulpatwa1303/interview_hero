@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id             Int             @id @default(autoincrement())
+  email          String          @unique
+  name           String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  active         Boolean         @default(true)
+  candidate_info candidate_info?
+}
+
+model interview {
+  id           Int                  @id @default(autoincrement())
+  interview_id String               @unique
+  start_time   DateTime?
+  end_time     DateTime?
+  questions    interview_question[] @relation("InterviewQuestions")
+}
+
+model interview_question {
+  id             Int       @id @default(autoincrement())
+  interview      interview @relation(fields: [interview_id], references: [id], name: "InterviewQuestions")
+  interview_id   Int
+  question       String
+  answer         String
+  submit_on      DateTime?
+  created_on     DateTime  @default(now())
+  updated_on     DateTime  @updatedAt
+  categoryCode   Int?
+  codingRequired Boolean?
+  score          Int?
+}
+
+model candidate_info {
+  id                   Int      @id @default(autoincrement())
+  userId               Int      @unique
+  user                 User     @relation(fields: [userId], references: [id])
+  yoe                  String
+  progLang             String[]
+  currentRole          String
+  desiredRole          String
+  interestedTechnology String[]
+  created_on           DateTime @default(now())
+  updated_on           DateTime @updatedAt
+}
