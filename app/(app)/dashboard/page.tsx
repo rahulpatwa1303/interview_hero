@@ -32,19 +32,19 @@ async function ensureOldSessionsCompleted(userId: string, supabaseClient: any) {
 }
 
 // Define types for props and searchParams
-interface DashboardPageProps {
-  searchParams: { // Made non-optional (searchParams object is always present)
-    page?: string;
-    limit?: string;
-    status?: string; // Filter by status
-    topic?: string;  // Search by topic
-    // It's good practice to include an index signature to match Next.js's general type
-    // for searchParams, allowing any other string-keyed parameters.
-    [key: string]: string | string[] | undefined;
-  };
-  // If you had dynamic route parameters, they would go into a `params` property here
-  // params?: { yourParam: string };
-}
+// interface DashboardPageProps {
+//   searchParams: { // Made non-optional (searchParams object is always present)
+//     page?: string;
+//     limit?: string;
+//     status?: string; // Filter by status
+//     topic?: string;  // Search by topic
+//     // It's good practice to include an index signature to match Next.js's general type
+//     // for searchParams, allowing any other string-keyed parameters.
+//     [key: string]: string | string[] | undefined;
+//   };
+//   // If you had dynamic route parameters, they would go into a `params` property here
+//   // params?: { yourParam: string };
+// }
 
 export default async function DashboardPage({ searchParams }: { searchParams: any }) {
   const supabase = createClient();
