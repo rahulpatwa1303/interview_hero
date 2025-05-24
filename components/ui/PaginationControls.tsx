@@ -1,17 +1,17 @@
 // components/ui/PaginationControls.tsx (or similar shared location)
 'use client';
 
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import { ITEMS_PER_PAGE } from '@/lib/utils';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 interface PaginationControlsProps {
   currentPage: number;
@@ -29,7 +29,6 @@ export default function PaginationControls({
   className,
 }: PaginationControlsProps) {
   const router = useRouter();
-  const pathname = usePathname(); // Should match basePath if used on that page
   const searchParams = useSearchParams(); // To get existing params
 
   const createPageQueryString = (pageNumber: number) => {
@@ -77,7 +76,7 @@ export default function PaginationControls({
     for (let i = 1; i <= totalPages; i++) pageNumbers.push(i);
   } else {
     let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
     if (endPage - startPage + 1 < maxVisiblePages) {
         startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }

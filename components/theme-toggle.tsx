@@ -1,8 +1,6 @@
 // components/theme-toggle.tsx
 'use client';
 
-import * as React from 'react';
-import { Moon, Sun, Monitor } from 'lucide-react'; // Added Monitor for system
 import { useAppTheme } from '@/components/theme-provider'; // Your custom hook
 import { Button } from '@/components/ui/button';
 import {
@@ -11,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Moon, Sun } from 'lucide-react'; // Added Monitor for system
 
 export function ThemeToggle() {
   // currentTheme is 'light', 'dark', or 'system' (our preference)

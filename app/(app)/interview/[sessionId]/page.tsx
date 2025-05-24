@@ -11,9 +11,6 @@ import { Suspense } from 'react';
 export const dynamicParams = true;
 
 
-interface InterviewSessionPageProps {
-    params: { sessionId: string };
-}
 
 function InterviewAreaLoadingFallback() {
     return (
@@ -24,7 +21,7 @@ function InterviewAreaLoadingFallback() {
     );
 }
 
-export default async function InterviewSessionPage({ params }: InterviewSessionPageProps) {
+export default async function InterviewSessionPage({ params }: { params: any }) {
     const sessionId = (await params).sessionId;
 
     const { session, error } = await getInterviewData(sessionId);

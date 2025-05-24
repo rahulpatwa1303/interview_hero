@@ -25,6 +25,9 @@ interface SessionForReview extends Session {
     // overall_analysis: any | null; // Assuming you added this to interview_sessions
 }
 
+interface InterviewReviewPageProps {
+    params: Promise<{ sessionId: string; }>;
+  }
 
 async function getAnalyzedSessionData(sessionId: string, userId: string): Promise<SessionForReview | null> {
     const supabase = createClient();
@@ -77,15 +80,15 @@ async function getAnalyzedSessionData(sessionId: string, userId: string): Promis
 }
 
 
-export default async function InterviewReviewPage({ params }: { params: { sessionId: string } }) {
+export default async function InterviewReviewPage({ params }: InterviewReviewPageProps)  {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-        return redirect(`/login?redirectTo=/interview/${params.sessionId}/review`);
+        return redirect(`/login?redirectTo=/interview/${(await params).sessionId}/review`);
     }
 
-    const sessionData = await getAnalyzedSessionData(params.sessionId, user.id);
+    const sessionData = await getAnalyzedSessionData((await params).sessionId, user.id);
 
     if (!sessionData) {
         return notFound(); // Or a more user-friendly "Session not found or not analyzed yet."

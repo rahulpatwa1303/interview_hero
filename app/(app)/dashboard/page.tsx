@@ -33,15 +33,20 @@ async function ensureOldSessionsCompleted(userId: string, supabaseClient: any) {
 
 // Define types for props and searchParams
 interface DashboardPageProps {
-  searchParams?: {
+  searchParams: { // Made non-optional (searchParams object is always present)
     page?: string;
     limit?: string;
     status?: string; // Filter by status
     topic?: string;  // Search by topic
+    // It's good practice to include an index signature to match Next.js's general type
+    // for searchParams, allowing any other string-keyed parameters.
+    [key: string]: string | string[] | undefined;
   };
+  // If you had dynamic route parameters, they would go into a `params` property here
+  // params?: { yourParam: string };
 }
 
-export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+export default async function DashboardPage({ searchParams }: { searchParams: any }) {
   const supabase = createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -67,10 +72,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     return redirect('/profile/setup?message=Please complete your profile to view the dashboard.');
   }
 
-  const currentPage = parseInt((await searchParams)?.page || '1', 10);
-  const limit = parseInt((await searchParams)?.limit || ITEMS_PER_PAGE.toString(), 10);
-  const statusFilter = (await searchParams)?.status || '';
-  const topicSearch = (await searchParams)?.topic || '';
+  const currentPage = parseInt(searchParams?.page || '1', 10);
+  const limit = parseInt(searchParams?.limit || ITEMS_PER_PAGE.toString(), 10);
+  const statusFilter = searchParams?.status || '';
+  const topicSearch = searchParams?.topic || '';
+  
 
   const from = (currentPage - 1) * limit;
   const to = from + limit - 1;
