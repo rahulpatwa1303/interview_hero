@@ -74,15 +74,31 @@ export default function LoginPage() {
         if (provider === 'github') setIsLoadingGithub(false);
     }
   };
-
   useEffect(() => {
     const checkUser = async () => {
+      // It's important this uses a client-side Supabase instance
       const { data: { session } } = await supabase.auth.getSession();
+      console.log("LoginPage: Client-side session check:", session);
       if (session) {
-        router.push('/dashboard');
+        console.log("LoginPage: Session found, redirecting to /dashboard");
+        router.push('/dashboard'); // Or to a previously intended URL
       }
     };
     checkUser();
+    
+    // Also listen for auth state changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("LoginPage: onAuthStateChange event:", event, "session:", session);
+      if (event === 'SIGNED_IN' && session) {
+        console.log("LoginPage: SIGNED_IN event, redirecting to /dashboard");
+        router.push('/dashboard');
+      }
+      // Handle SIGNED_OUT if needed
+    });
+  
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
   }, [supabase, router]);
 
   return (

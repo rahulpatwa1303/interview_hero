@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client';
-import { ChevronLeft, ChevronRight, Save, Mic, Code2, Edit3, SendHorizonal, LogOut } from 'lucide-react'; // Added icons
+import { ChevronLeft, ChevronRight, Save, Mic, Code2, Edit3, SendHorizonal, LogOut, Check } from 'lucide-react'; // Added icons
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge'; // Assuming you have Badge
@@ -420,15 +420,17 @@ export default function InterviewArea({ session, initialQuestions }: InterviewAr
                 )}
             </CardContent>
 
-            <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-2 border-t pt-4">
+            <CardFooter className="flex flex-row sm:flex-row justify-between items-center gap-2 border-t pt-4">
                 <Button onClick={() => handleNavigateQuestion('prev')} disabled={currentQuestionIndex === 0 || isSubmittingAnswer} variant="outline">
-                    <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    <span className="hidden sm:inline ml-1">Previous</span>
                 </Button>
 
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm" className="w-full sm:w-auto order-last sm:order-none" disabled={isLeaving || isSubmittingAnswer}>
-                            <LogOut className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Leave</span><span className="sm:hidden">Leave Interview</span>
+                        <Button variant="destructive" size="sm" className="w-10 sm:w-auto order-last sm:order-none" disabled={isLeaving || isSubmittingAnswer}>
+                            <LogOut className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Leave</span>
+                            {/* <span className="sm:hidden">Leave Interview</span> */}
                         </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -455,14 +457,18 @@ export default function InterviewArea({ session, initialQuestions }: InterviewAr
                     <Button
                         onClick={handleFinishInterview}
                         disabled={isSubmittingAnswer || isAnalyzing} // Disable if submitting OR analyzing
-                        className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
+                        className="bg-green-600 hover:bg-green-700 text-white w-10 sm:w-auto"
                     >
                         {(isSubmittingAnswer || isAnalyzing) && <PiSpinner className="mr-2 h-4 w-4 animate-spin" />}
+                        <Check className="h-4 w-4 ml-1" />
+                        <span className="hidden sm:inline ml-1">
+
                         {isAnalyzing ? 'Analyzing...' : (isSubmittingAnswer ? 'Finishing...' : 'Finish Interview')}
+                        </span>
                     </Button>
                 ) : (
                     <Button onClick={() => handleNavigateQuestion('next')} disabled={isSubmittingAnswer} variant="outline">
-                        Next <ChevronRight className="h-4 w-4 ml-1" />
+                        <span className="hidden sm:inline ml-1">Next</span> <ChevronRight className="h-4 w-4 ml-1" />
                     </Button>
                 )}
             </CardFooter>

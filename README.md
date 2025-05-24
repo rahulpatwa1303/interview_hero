@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🧠 Interview Hero
 
-## Getting Started
+**Interview Hero** is an AI-powered mock interview platform that helps users practice and improve their interview skills. Powered by Google Gemini, the app generates tailored questions and provides intelligent feedback based on user responses.
 
-First, run the development server:
+---
+
+## 🌐 Live Demo
+
+🚧 Coming Soon: [https://your-demo-link.com](#)
+
+---
+
+## 📸 Screenshot
+
+![Screenshot Placeholder](#) <!-- Replace with actual screenshot or GIF -->
+
+---
+
+## ✨ Features
+
+- 🤖 **AI-Generated Interview Questions** — Personalized questions using Google Gemini.
+- 🎯 **Topic & Role Selection** — Choose specific domains or roles to practice for.
+- 🧠 **Answer Analysis & Feedback** — Intelligent feedback on your responses using AI.
+- 📊 **Progress Tracking** *(If implemented)* — Monitor performance over time.
+- 🔐 **Authentication** — User login/signup via Supabase Auth.
+
+---
+
+## 🛠 Tech Stack
+
+- **Frontend**: Next.js 15 (App Router), TypeScript, Tailwind CSS, Shadcn/ui  
+- **Backend**: Supabase (PostgreSQL, Supabase Auth, Edge Functions)  
+- **AI**: Google Gemini API (for question generation and answer analysis)
+
+---
+
+## 🚀 Getting Started
+
+### ✅ Prerequisites
+
+- [Node.js](https://nodejs.org/) (v18+)
+- [Supabase CLI](https://supabase.com/docs/guides/cli)
+
+---
+
+### 📦 Clone the Repository
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/rahulpatwa1303/interview_hero.git
+cd interview_hero
+```
+🔐 Setup Environment Variables
+Create a .env.local file at the root of your project and add:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+GEMINI_API_KEY=your_google_gemini_api_key
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Supabase URL & Anon Key: Found in your Supabase project settings under Project → API.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Gemini API Key: Get from Google AI Studio.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+📥 Install Dependencies
+```bash
+npm install
+```
 
-## Learn More
+▶️ Run the App
+```bash
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+🧪 Supabase Setup (Optional for Local Dev)
+```bash
+supabase login
+supabase init
+supabase start
+supabase db push  # Run migrations if available
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+🤝 Contributing
+Contributions are welcome!
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Fork the repository
 
-## Deploy on Vercel
+2. Create a feature branch: git checkout -b feature/your-feature-name
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3. Commit your changes: git commit -m "Add your feature"
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+4. Push to your fork: git push origin feature/your-feature-name
+
+5. Open a Pull Request
+

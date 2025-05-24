@@ -73,6 +73,27 @@ export type Database = {
           },
         ]
       }
+      api_request_logs: {
+        Row: {
+          created_at: string
+          id: number
+          ip_address: string
+          route: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          ip_address: string
+          route: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          ip_address?: string
+          route?: string
+        }
+        Relationships: []
+      }
       interview_questions: {
         Row: {
           created_at: string

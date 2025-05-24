@@ -20,6 +20,16 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area"
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { Menu, Sparkles, Swords } from 'lucide-react';
+import Image from 'next/image';
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+    SheetClose // Optional for explicit close buttons inside
+} from "@/components/ui/sheet";
 
 
 interface AppLayoutProps {
@@ -41,6 +51,8 @@ export default function AppLayout({
     const [isLoading, setIsLoading] = React.useState(true);
     const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
     const pathname = usePathname();
+    const [isMobileNavOpen, setIsMobileNavOpen] = React.useState(false);
+
 
     React.useEffect(() => {
         const fetchUserSession = async () => {
@@ -128,8 +140,8 @@ export default function AppLayout({
                 >
                     <div className={cn("flex h-[56px] items-center justify-center px-2 sticky top-0 bg-background z-10 border-b", isCollapsed ? 'px-0' : 'px-4')}>
                         {/* Optionally add a logo or app name here */}
-                        <Link href="/dashboard" className={cn("font-bold text-lg", isCollapsed && "hidden")}>
-                            MyApp
+                        <Link href="/dashboard" className={cn("font-bold text-lg flex flex-row items-center", isCollapsed && "hidden",)}>
+                            <Image src={'/images/interview_hero.png'} height={20} width={20} alt='interview_hero' /><span className={cn(isCollapsed && "hidden",)}>InterviewHero</span>
                         </Link>
                         <Button variant="ghost" size="icon" className={cn("ml-auto", !isCollapsed && "hidden")} onClick={() => setIsCollapsed(false)}>
                             <Icons.panelLeft className="h-5 w-5" />
@@ -148,15 +160,46 @@ export default function AppLayout({
                     <div className="flex flex-col h-screen">
                         <header className="sticky top-0 z-10 flex h-fit py-[9.5px] items-center gap-1 border-b bg-background px-4">
                             {/* Mobile Nav Toggle - shows on small screens */}
-                            <Button
+                            {/* <Button
                                 variant="ghost"
                                 size="icon"
                                 className="md:hidden"
-                            // onClick={() => setIsMobileNavOpen(!isMobileNavOpen)} // Need state for mobile nav
+                                onClick={() => setIsMobileNavOpen(false)} // Need state for mobile nav
                             >
                                 <Icons.panelLeft className="h-5 w-5" />
                                 <span className="sr-only">Toggle Menu</span>
-                            </Button>
+                            </Button> */}
+                                                   <div className="md:hidden"> {/* Only show on mobile */}
+                            <Sheet open={isMobileNavOpen} onOpenChange={setIsMobileNavOpen}>
+                                <SheetTrigger asChild>
+                                    <Button variant="outline" size="icon">
+                                        <Menu className="h-5 w-5" />
+                                        <span className="sr-only">Toggle navigation menu</span>
+                                    </Button>
+                                </SheetTrigger>
+                                <SheetContent side="left" className="flex flex-col p-0 w-64 sm:w-72"> {/* Added width */}
+                                    <SheetHeader className="p-4 border-b">
+                                        <SheetTitle asChild>
+                                            <Link href="/dashboard" className="font-bold text-lg flex flex-row items-center" onClick={() => setIsMobileNavOpen(false)}>
+                                                <Image src={'/images/interview_hero.png'} height={20} width={20} alt='interview_hero' />
+                                                <span>InterviewHero</span>
+                                            </Link>
+                                        </SheetTitle>
+                                    </SheetHeader>
+                                    <ScrollArea className="flex-1"> {/* Scrollable Nav for mobile */}
+                                        {/* Use the same Nav component, always un-collapsed for mobile sheet */}
+                                        <Nav 
+                                            isCollapsed={false} 
+                                            links={mainNavLinks} 
+                                            bottomLinks={bottomNavLinks} 
+                                            // Optional: Add an onLinkClick prop to Nav to call setIsMobileNavOpen(false)
+                                            // if Nav links don't cause pathname to change (e.g. hash links)
+                                        />
+                                    </ScrollArea>
+                                    {/* Optional: Footer in sheet */}
+                                </SheetContent>
+                            </Sheet>
+                            </div>
                             <h1 className="text-xl font-semibold ml-2 md:ml-0">
                                 {/* Dynamically set page title based on route or context */}
                                 {mainNavLinks.find(link => pathname.startsWith(link.href))?.title ||

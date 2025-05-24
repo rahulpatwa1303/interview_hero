@@ -8,6 +8,9 @@ import MonacoWebpackPlugin from 'monaco-editor-webpack-plugin';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true, // Or your existing configurations
+  images: {
+    unoptimized: false, // Optional but explicit
+  },
   // experimental: {
   //   turbo: {}, // This object enables specific Turbopack features by default
   // },

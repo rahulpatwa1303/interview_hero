@@ -57,8 +57,6 @@ export async function updateSession(request: NextRequest) {
 
   // Refresh session if expired - important for Server Components
   // await supabase.auth.getUser(); // This was for older versions, new way below
-  await supabase.auth.getSession();
-
-
+  await supabase.auth.getSession(); // Refreshes the session, crucial!
   return response;
 }

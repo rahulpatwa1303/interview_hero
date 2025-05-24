@@ -14,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@radix
 import { ITEMS_PER_PAGE } from '@/lib/utils';
 import PaginationControls from '@/components/ui/PaginationControls';
 import DashboardFilters from './DashboardFilters';
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 // Helper function to auto-complete old sessions - can be called here or moved to a shared actions file
 async function ensureOldSessionsCompleted(userId: string, supabaseClient: any) { // Pass supabaseClient
@@ -98,13 +99,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   const getExpirationTime = (startedAt: string): string => {
     try {
-        const startTime = parseISO(startedAt);
-        const expirationTime = addHours(startTime, 3);
-        return formatDate(expirationTime.toISOString());
+      const startTime = parseISO(startedAt);
+      const expirationTime = addHours(startTime, 3);
+      return formatDate(expirationTime.toISOString());
     } catch (e) {
-        return 'Error calculating expiration';
+      return 'Error calculating expiration';
     }
-};
+  };
 
   const totalPages = totalCount ? Math.ceil(totalCount / limit) : 0;
 
@@ -139,79 +140,84 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 currentFilters={{ status: statusFilter, topic: topicSearch, limit: limit.toString() }}
               />
             )}
-            {sessions && sessions.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Topic</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Started</TableHead>
-                    <TableHead>Completed</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sessions.map((session) => (
-                    <TableRow key={session.id}>
-                      <TableCell className="font-medium">{session.topic || 'General'}</TableCell>
-                      <TableCell>
-                        <Badge variant={session.status === 'completed' ? 'default' : session.status === 'in_progress' ? 'secondary' : 'outline'}>
-                          {session.status}
-                        </Badge>
-                      </TableCell>
-                      {/* <TableCell>{formatDate(session.started_at)}</TableCell> */}
-                      <TableCell>
-                        {session.status === 'in_progress' && session.started_at ? (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              {/* Wrap in a span to make the trigger area clear and add cursor */}
-                              <span className="flex items-center gap-1 cursor-help underline decoration-dotted decoration-muted-foreground">
-                                {formatDate(session.started_at)}
-                                <Info className="h-3 w-3 text-muted-foreground" />
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" align="start" className="text-xs bg-muted p-2 rounded-md shadow"> {/* Custom class for smaller text */}
-                              <p>This session will auto-complete around:</p>
-                              <p className="font-semibold">{getExpirationTime(session.started_at)}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        ) : (
-                          formatDate(session.started_at) // Or 'N/A' or other display for non-in-progress
-                        )}
-                      </TableCell>
-                      <TableCell>{session.completed_at ? formatDate(session.completed_at) : 'In Progress'}</TableCell>
-                      <TableCell className="text-center flex items-center justify-end gap-2" >
-                        {session.status === 'in_progress' ? (
-                          <Button variant="outline" size="sm" asChild title="Resume Interview">
-                            <Link href={`/interview/${session.id}?q=1`}>
-                              <PlayCircle className="h-4 w-4 md:mr-1" /> <span className="hidden md:inline">Resume</span>
-                            </Link>
-                          </Button>
-                        ) : (session.status === 'completed' || session.status === 'analyzed') ? (
-                          <Button variant="outline" size="sm" asChild title="View Review">
-                            <Link href={`/interview/${session.id}/review`}>
-                              <Eye className="h-4 w-4 md:mr-1" /> <span className="hidden md:inline">Review</span>
-                            </Link>
-                          </Button>
-                        ) : null}
-                        {(session.status === 'completed' || session.status === 'analyzed') && ( // Only show Analyze button if completed but not yet analyzed
-                          <AnalyzeButton sessionId={session.id} />
-                        )}
-                      </TableCell>
+           <div className="w-full overflow-x-auto rounded-md border">
+
+              {sessions && sessions.length > 0 ? (
+                <Table className="min-w-[600px] sm:min-w-full">
+                  <ScrollBar orientation="horizontal" />
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Topic</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Started</TableHead>
+                      <TableHead>Completed</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <div className="text-center py-10">
-                <p className="text-muted-foreground">You haven't started any interview sessions yet.</p>
-                <Button asChild className="mt-4">
-                  <Link href="/interview/new">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Start Your First Interview
-                  </Link>
-                </Button>
-              </div>
-            )}
+                  </TableHeader>
+                  <TableBody>
+                    {sessions.map((session) => (
+                      <TableRow key={session.id}>
+                        <TableCell className="font-medium">{session.topic || 'General'}</TableCell>
+                        <TableCell>
+                          <Badge variant={session.status === 'completed' ? 'default' : session.status === 'in_progress' ? 'secondary' : 'outline'}>
+                            {session.status}
+                          </Badge>
+                        </TableCell>
+                        {/* <TableCell>{formatDate(session.started_at)}</TableCell> */}
+                        <TableCell>
+                          {session.status === 'in_progress' && session.started_at ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                {/* Wrap in a span to make the trigger area clear and add cursor */}
+                                <span className="flex items-center gap-1 cursor-help underline decoration-dotted decoration-muted-foreground">
+                                  {formatDate(session.started_at)}
+                                  <Info className="h-3 w-3 text-muted-foreground" />
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" align="start" className="text-xs bg-muted p-2 rounded-md shadow"> {/* Custom class for smaller text */}
+                                <p>This session will auto-complete around:</p>
+                                <p className="font-semibold">{getExpirationTime(session.started_at)}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            formatDate(session.started_at) // Or 'N/A' or other display for non-in-progress
+                          )}
+                        </TableCell>
+                        <TableCell>{session.completed_at ? formatDate(session.completed_at) : 'In Progress'}</TableCell>
+                        <TableCell className="text-center flex items-center justify-end gap-2" >
+                          {session.status === 'in_progress' ? (
+                            <Button variant="outline" size="sm" asChild title="Resume Interview">
+                              <Link href={`/interview/${session.id}?q=1`}>
+                                <PlayCircle className="h-4 w-4 md:mr-1" /> <span className="hidden md:inline">Resume</span>
+                              </Link>
+                            </Button>
+                          ) : (session.status === 'completed' || session.status === 'analyzed') ? (
+                            <Button variant="outline" size="sm" asChild title="View Review">
+                              <Link href={`/interview/${session.id}/review`}>
+                                <Eye className="h-4 w-4 md:mr-1" /> <span className="hidden md:inline">Review</span>
+                              </Link>
+                            </Button>
+                          ) : null}
+                          {(session.status === 'completed' || session.status === 'analyzed') && ( // Only show Analyze button if completed but not yet analyzed
+                            <AnalyzeButton sessionId={session.id} />
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+
+              ) : (
+                <div className="text-center py-10">
+                  <p className="text-muted-foreground">You haven't started any interview sessions yet.</p>
+                  <Button asChild className="mt-4">
+                    <Link href="/interview/new">
+                      <PlusCircle className="mr-2 h-4 w-4" /> Start Your First Interview
+                    </Link>
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>
