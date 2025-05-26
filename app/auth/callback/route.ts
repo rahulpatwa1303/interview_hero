@@ -66,7 +66,8 @@ export async function GET(request: Request) {
       } else if (userData) { // User data was fetched successfully
          if (!userData.profile_complete) {
              console.log(`User ${data.user.id} (${userData.name || data.user.email}) found, but profile incomplete, redirecting to /profile/setup.`);
-             return NextResponse.redirect(`${origin}/profile/setup`);
+            //  return NextResponse.redirect(`${origin}/profile/setup`);
+            return NextResponse.redirect(`${origin}/dashboard`);
          } else {
               console.log(`User ${data.user.id} (${userData.name || data.user.email}) found, profile complete, redirecting to /dashboard.`);
               return NextResponse.redirect(`${origin}/dashboard`);
