@@ -15,6 +15,7 @@ import { ITEMS_PER_PAGE } from '@/lib/utils';
 import PaginationControls from '@/components/ui/PaginationControls';
 import DashboardFilters from './DashboardFilters';
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import type { PageProps } from '@/types';
 
 // Helper function to auto-complete old sessions - can be called here or moved to a shared actions file
 async function ensureOldSessionsCompleted(userId: string, supabaseClient: any) { // Pass supabaseClient
@@ -32,21 +33,14 @@ async function ensureOldSessionsCompleted(userId: string, supabaseClient: any) {
 }
 
 // Define types for props and searchParams
-// interface DashboardPageProps {
-//   searchParams: { // Made non-optional (searchParams object is always present)
-//     page?: string;
-//     limit?: string;
-//     status?: string; // Filter by status
-//     topic?: string;  // Search by topic
-//     // It's good practice to include an index signature to match Next.js's general type
-//     // for searchParams, allowing any other string-keyed parameters.
-//     [key: string]: string | string[] | undefined;
-//   };
-//   // If you had dynamic route parameters, they would go into a `params` property here
-//   // params?: { yourParam: string };
-// }
+type DashboardPageProps = {
+  // params?: { /* if you had dynamic route params */ };
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+};
 
-export default async function DashboardPage({ searchParams }: { searchParams: any }) {
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  // const { page,limit,status,topic } = await searchParams; 
   const supabase = createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -72,10 +66,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: an
     return redirect('/profile/setup?message=Please complete your profile to view the dashboard.');
   }
 
-  const currentPage = parseInt(searchParams?.page || '1', 10);
-  const limit = parseInt(searchParams?.limit || ITEMS_PER_PAGE.toString(), 10);
-  const statusFilter = searchParams?.status || '';
-  const topicSearch = searchParams?.topic || '';
+  const getString = (value: string | string[] | undefined): string => {
+    if (Array.isArray(value)) return value[0] || '';
+    return value || '';
+  };
+  
+  const currentPage = parseInt(getString((await searchParams)?.page) || '1', 10);
+  const limit = parseInt(getString((await searchParams)?.limit) || ITEMS_PER_PAGE.toString(), 10);
+  const statusFilter = getString((await searchParams)?.status);
+  const topicSearch = getString((await searchParams)?.topic);
   
 
   const from = (currentPage - 1) * limit;
