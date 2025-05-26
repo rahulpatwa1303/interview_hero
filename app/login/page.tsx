@@ -48,7 +48,7 @@ export default function LoginPage() {
     if (errorParam && messageParam) {
       toast(decodeURIComponent(messageParam),);
     } else if (messageParam) {
-       toast( decodeURIComponent(messageParam),);
+      toast(decodeURIComponent(messageParam),);
     }
     // Clear search params after showing toast to prevent re-showing on refresh/navigation
     // router.replace('/login', { scroll: false }); // This can be aggressive, use if needed
@@ -59,21 +59,37 @@ export default function LoginPage() {
     if (provider === 'google') setIsLoadingGoogle(true);
     if (provider === 'github') setIsLoadingGithub(true);
 
-    const response = await fetch('/auth/sign-in', {
+    try {
+      const response = await fetch('/auth/sign-in', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ provider }),
-    });
+      });
 
-    if (response.redirected && response.url) {
-        window.location.href = response.url;
-    } else {
-        const result = await response.json();
-        toast(result.error || 'Could not initiate OAuth sign-in.',);
-        if (provider === 'google') setIsLoadingGoogle(false);
-        if (provider === 'github') setIsLoadingGithub(false);
+      const result = await response.json(); // Always parse JSON
+
+      if (!response.ok) { // Check if response status is not 2xx
+        // Error came from our /auth/sign-in route
+        throw new Error(result.error || `Failed to initiate ${provider} sign-in. Status: ${response.status}`);
+      }
+
+      if (result.url) {
+        // This is the Supabase OAuth URL, navigate to it
+        window.location.href = result.url;
+        // Don't setIsLoadingXxx(false) here, as the page will navigate away
+      } else {
+        // Should not happen if response.ok is true and route is correct, but good to have
+        throw new Error(`No redirect URL received for ${provider}.`);
+      }
+
+    } catch (error: any) {
+      console.error(`OAuth Sign-In Error (${provider}):`, error);
+      toast.error(error.message || `Could not initiate ${provider} sign-in.`);
+      if (provider === 'google') setIsLoadingGoogle(false);
+      if (provider === 'github') setIsLoadingGithub(false);
     }
   };
+
   useEffect(() => {
     const checkUser = async () => {
       // It's important this uses a client-side Supabase instance
@@ -85,7 +101,7 @@ export default function LoginPage() {
       }
     };
     checkUser();
-    
+
     // Also listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("LoginPage: onAuthStateChange event:", event, "session:", session);
@@ -95,7 +111,7 @@ export default function LoginPage() {
       }
       // Handle SIGNED_OUT if needed
     });
-  
+
     return () => {
       authListener?.subscription.unsubscribe();
     };
@@ -136,7 +152,7 @@ export default function LoginPage() {
             Sign in with GitHub
           </Button>
         </CardContent>
-         {/* Removed CardFooter, messages are handled by Toasts now */}
+        {/* Removed CardFooter, messages are handled by Toasts now */}
       </Card>
     </div>
   );
