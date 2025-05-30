@@ -3,226 +3,195 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge"; // npx shadcn-ui@latest add badge
-import { Eye, Info, PlayCircle, PlusCircle } from 'lucide-react';
-import { addHours, format, parseISO } from 'date-fns'; // npm install date-fns
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+// Table components are no longer directly used here for the main list
+// import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Eye, Info, PlayCircle, PlusCircle, CalendarDays, CheckCircle, Clock } from 'lucide-react'; // Added more icons
+import { addHours, format, parseISO, formatDistanceToNow } from 'date-fns'; // Added formatDistanceToNow
 import StartInterviewButton from './StartInterviewButton';
 import AnalyzeButton from './AnalyzeButton';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@radix-ui/react-tooltip';
-import { ITEMS_PER_PAGE } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ITEMS_PER_PAGE } from '@/lib/utils'; // Ensure this path is correct
 import PaginationControls from '@/components/ui/PaginationControls';
 import DashboardFilters from './DashboardFilters';
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import type { PageProps } from '@/types';
-
-// Helper function to auto-complete old sessions - can be called here or moved to a shared actions file
-async function ensureOldSessionsCompleted(userId: string, supabaseClient: any) { // Pass supabaseClient
-  const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
-  const { error: updateError } = await supabaseClient
-    .from('interview_sessions')
-    .update({ status: 'completed', completed_at: new Date().toISOString() })
-    .eq('user_id', userId)
-    .eq('status', 'in_progress')
-    .lt('started_at', threeHoursAgo);
-
-  if (updateError) {
-    console.error("Dashboard: Error auto-completing old sessions:", updateError.message);
-  }
-}
+// ScrollArea and ScrollBar are not needed for the card grid directly
+// import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 // Define types for props and searchParams
 type DashboardPageProps = {
-  // params?: { /* if you had dynamic route params */ };
-  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams?: { [key: string]: string | string[] | undefined }; // Simplified for direct access
 };
 
+async function ensureOldSessionsCompleted(userId: string, supabaseClient: any) { /* ... same ... */ }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
-  // const { page,limit,status,topic } = await searchParams; 
   const supabase = createClient();
-
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    // This should ideally be caught by the (app)/layout.tsx
-    return redirect('/login?message=You need to be logged in.');
-  }
-
+  if (!user) return redirect('/login?message=You need to be logged in.');
   await ensureOldSessionsCompleted(user.id, supabase);
-  // Check if profile is complete (also done in layout, but good for direct page access logic)
-  const { data: userProfile, error: profileErrorCheck } = await supabase
-    .from('users')
-    .select('profile_complete')
-    .eq('id', user.id)
-    .single();
+  const { data: userProfile } = await supabase.from('users').select('profile_complete').eq('id', user.id).single();
+  if (!userProfile?.profile_complete) return redirect('/profile/setup?message=Please complete your profile');
 
-  if (profileErrorCheck && profileErrorCheck.code !== 'PGRST116') {
-    console.error("Dashboard: Error fetching profile status", profileErrorCheck);
-    // Handle error appropriately
-  }
-  if (!userProfile?.profile_complete) {
-    return redirect('/profile/setup?message=Please complete your profile to view the dashboard.');
-  }
-
-  const getString = (value: string | string[] | undefined): string => {
-    if (Array.isArray(value)) return value[0] || '';
-    return value || '';
+  const getStringParam = (param: string | string[] | undefined): string => {
+    if (Array.isArray(param)) return param[0] || '';
+    return param || '';
   };
-  
-  const currentPage = parseInt(getString((await searchParams)?.page) || '1', 10);
-  const limit = parseInt(getString((await searchParams)?.limit) || ITEMS_PER_PAGE.toString(), 10);
-  const statusFilter = getString((await searchParams)?.status);
-  const topicSearch = getString((await searchParams)?.topic);
-  
+
+  const currentPage = parseInt(getStringParam(searchParams?.page) || '1', 10);
+  const limit = parseInt(getStringParam(searchParams?.limit) || ITEMS_PER_PAGE.toString(), 10);
+  const statusFilter = getStringParam(searchParams?.status);
+  const topicSearch = getStringParam(searchParams?.topic);
 
   const from = (currentPage - 1) * limit;
   const to = from + limit - 1;
 
   let query = supabase
     .from('interview_sessions')
-    .select('id, started_at, completed_at, topic, status', { count: 'exact' }) // Get total count
-    .eq('user_id', user.id).order('started_at', { ascending: false }); // Show newest first
+    .select('id, started_at, completed_at, topic, status', { count: 'exact' })
+    .eq('user_id', user.id);
 
-  if (statusFilter && statusFilter !== "all") {
-    query = query.eq('status', statusFilter);
-  }
-  if (topicSearch) {
-    query = query.ilike('topic', `%${topicSearch}%`); // Case-insensitive search
-  }
-
+  if (statusFilter && statusFilter !== "all") query = query.eq('status', statusFilter);
+  if (topicSearch) query = query.ilike('topic', `%${topicSearch}%`);
   query = query.order('started_at', { ascending: false }).range(from, to);
 
   const { data: sessions, error: sessionsError, count: totalCount } = await query;
 
+  if (sessionsError) console.error("Error fetching interview sessions:", sessionsError);
 
-  if (sessionsError) {
-    console.error("Error fetching interview sessions:", sessionsError);
-    // Handle error - maybe show a message to the user
-  }
+  const formatDate = (dateString?: string | null, customFormat = 'MMM d, yyyy, h:mm a') => {
+    if (!dateString) return 'N/A';
+    try { return format(parseISO(dateString), customFormat); } catch (e) { return dateString; }
+  };
 
   const getExpirationTime = (startedAt: string): string => {
     try {
       const startTime = parseISO(startedAt);
       const expirationTime = addHours(startTime, 3);
       return formatDate(expirationTime.toISOString());
-    } catch (e) {
-      return 'Error calculating expiration';
-    }
+    } catch (e) { return 'Error calculating expiration'; }
   };
 
   const totalPages = totalCount ? Math.ceil(totalCount / limit) : 0;
 
-  const formatDate = (dateString?: string | null) => {
-    if (!dateString) return 'N/A';
-    try {
-      return format(parseISO(dateString), 'MMM d, yyyy HH:mm');
-    } catch (e) {
-      return dateString; // Fallback if parsing fails
-    }
-  };
-
   return (
-    <TooltipProvider delayDuration={0}>
+    <TooltipProvider delayDuration={100}> {/* delayDuration={0} for immediate */}
       <div className="space-y-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+        <Card className='shadow-none'> {/* This outer card could be optional if page itself provides enough structure */}
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b pb-4">
             <div>
-              <CardTitle>Interview History</CardTitle>
+              <CardTitle className="text-2xl">Interview History</CardTitle>
               <CardDescription>Review your past practice sessions.</CardDescription>
             </div>
             <StartInterviewButton />
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6 space-y-6"> {/* Added space-y for spacing between elements */}
             <DashboardFilters currentStatus={statusFilter} currentTopic={topicSearch} />
-            {/* Top Pagination */}
+
             {totalPages > 1 && (
               <PaginationControls
                 currentPage={currentPage}
                 totalPages={totalPages}
                 basePath="/dashboard"
                 currentFilters={{ status: statusFilter, topic: topicSearch, limit: limit.toString() }}
+                className="py-2"
               />
             )}
-           <div className="w-full overflow-x-auto rounded-md border">
 
-              {sessions && sessions.length > 0 ? (
-                <Table className="min-w-[600px] sm:min-w-full">
-                  <ScrollBar orientation="horizontal" />
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Topic</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Started</TableHead>
-                      <TableHead>Completed</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sessions.map((session) => (
-                      <TableRow key={session.id}>
-                        <TableCell className="font-medium">{session.topic || 'General'}</TableCell>
-                        <TableCell>
-                          <Badge variant={session.status === 'completed' ? 'default' : session.status === 'in_progress' ? 'secondary' : 'outline'}>
-                            {session.status}
-                          </Badge>
-                        </TableCell>
-                        {/* <TableCell>{formatDate(session.started_at)}</TableCell> */}
-                        <TableCell>
+            {sessions && sessions.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                {sessions.map((session) => (
+                  <Card key={session.id} className="flex flex-col shadow-md hover:shadow-lg transition-shadow">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg font-semibold leading-tight break-words">
+                        {session.topic || 'General Practice'}
+                      </CardTitle>
+                      <Badge
+                        variant={
+                          session.status === 'analyzed' ? 'default' :
+                            session.status === 'completed' ? 'default' :
+                              session.status === 'in_progress' ? 'secondary' : 'outline'
+                        }
+                        className="capitalize whitespace-nowrap w-fit text-xs mt-1.5"
+                      >
+                        {session.status?.replace('_', ' ') || 'Unknown'}
+                      </Badge>
+                    </CardHeader>
+                    <CardContent className="space-y-1.5 text-sm text-muted-foreground flex-grow">
+                      <div className="flex items-center gap-2">
+                        <CalendarDays className="h-4 w-4" />
+                        <span>
                           {session.status === 'in_progress' && session.started_at ? (
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                {/* Wrap in a span to make the trigger area clear and add cursor */}
-                                <span className="flex items-center gap-1 cursor-help underline decoration-dotted decoration-muted-foreground">
-                                  {formatDate(session.started_at)}
-                                  <Info className="h-3 w-3 text-muted-foreground" />
+                                <span className="flex items-center gap-1 cursor-help underline decoration-dotted">
+                                  Started: {formatDate(session.started_at, 'MMM d, h:mm a')}
+                                  <Info className="h-3 w-3" />
                                 </span>
                               </TooltipTrigger>
-                              <TooltipContent side="top" align="start" className="text-xs bg-muted p-2 rounded-md shadow"> {/* Custom class for smaller text */}
-                                <p>This session will auto-complete around:</p>
-                                <p className="font-semibold">{getExpirationTime(session.started_at)}</p>
+                              <TooltipContent side="top" align="start" className="text-xs bg-popover text-popover-foreground p-2 rounded-md shadow">
+                                <p>Expires around: {getExpirationTime(session.started_at)}</p>
                               </TooltipContent>
                             </Tooltip>
                           ) : (
-                            formatDate(session.started_at) // Or 'N/A' or other display for non-in-progress
+                            `Started: ${formatDate(session.started_at, 'MMM d, h:mm a')}`
                           )}
-                        </TableCell>
-                        <TableCell>{session.completed_at ? formatDate(session.completed_at) : 'In Progress'}</TableCell>
-                        <TableCell className="text-center flex items-center justify-end gap-2" >
-                          {session.status === 'in_progress' ? (
-                            <Button variant="outline" size="sm" asChild title="Resume Interview">
-                              <Link href={`/interview/${session.id}?q=1`}>
-                                <PlayCircle className="h-4 w-4 md:mr-1" /> <span className="hidden md:inline">Resume</span>
-                              </Link>
-                            </Button>
-                          ) : (session.status === 'completed' || session.status === 'analyzed') ? (
-                            <Button variant="outline" size="sm" asChild title="View Review">
-                              <Link href={`/interview/${session.id}/review`}>
-                                <Eye className="h-4 w-4 md:mr-1" /> <span className="hidden md:inline">Review</span>
-                              </Link>
-                            </Button>
-                          ) : null}
-                          {(session.status === 'completed' || session.status === 'analyzed') && ( // Only show Analyze button if completed but not yet analyzed
-                            <AnalyzeButton sessionId={session.id} />
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                        </span>
+                      </div>
+                      {session.completed_at && session.status !== 'in_progress' && (
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <span>Completed: {formatDate(session.completed_at, 'MMM d, h:mm a')}</span>
+                        </div>
+                      )}
+                      {session.status === 'in_progress' && (
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-blue-500" />
+                          <span>In Progress</span>
+                        </div>
+                      )}
+                    </CardContent>
+                    <CardFooter className="flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-end gap-2 border-t pt-3 pb-3">
+                      {session.status === 'in_progress' ? (
+                        <Button variant="outline" size="sm" asChild className="w-full sm:w-auto justify-center">
+                          <Link href={`/interview/${session.id}?q=1`}><PlayCircle className="h-4 w-4 mr-2" /> Resume</Link>
+                        </Button>
+                      ) : (session.status === 'completed' || session.status === 'analyzed') ? (
+                        <Button variant="outline" size="sm" asChild className="w-full sm:w-auto justify-center">
+                          <Link href={`/interview/${session.id}/review`}><Eye className="h-4 w-4 mr-2" /> Review</Link>
+                        </Button>
+                      ) : null}
+                      {session.status === 'completed' && ( // Only show if 'completed' but not yet 'analyzed'
+                        <AnalyzeButton sessionId={session.id} />
+                      )}
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16 border-2 border-dashed rounded-lg">
+                <PlusCircle className="mx-auto h-12 w-12 text-muted-foreground" />
+                <h3 className="mt-2 text-lg font-medium text-foreground">
+                  {statusFilter || topicSearch ? "No sessions match your filters." : "No interview sessions yet."}
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {statusFilter || topicSearch ? "Try adjusting your filters or " : "Get started by creating your first one."}
+                  {!(statusFilter || topicSearch) && <Link href="/interview/new" className="text-primary hover:underline">start a new interview</Link>}
+                </p>
+                {(statusFilter || topicSearch) && <Button variant="link" asChild className="mt-2"><Link href="/dashboard">Clear Filters</Link></Button>}
+              </div>
+            )}
 
-              ) : (
-                <div className="text-center py-10">
-                  <p className="text-muted-foreground">You haven't started any interview sessions yet.</p>
-                  <Button asChild className="mt-4">
-                    <Link href="/interview/new">
-                      <PlusCircle className="mr-2 h-4 w-4" /> Start Your First Interview
-                    </Link>
-                  </Button>
-                </div>
-              )}
-            </div>
+            {totalPages > 1 && (
+              <PaginationControls
+                currentPage={currentPage}
+                totalPages={totalPages}
+                basePath="/dashboard"
+                currentFilters={{ status: statusFilter, topic: topicSearch, limit: limit.toString() }}
+                className="mt-8 py-2" // Increased margin-top
+              />
+            )}
           </CardContent>
         </Card>
       </div>

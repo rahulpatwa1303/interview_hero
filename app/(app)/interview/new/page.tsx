@@ -1,84 +1,58 @@
 // app/(app)/interview/new/page.tsx
 'use client';
 
-// REMOVE: import { createClient } from '@/lib/supabase/server'; // Not used in client component
-import { useSearchParams, useRouter } from 'next/navigation'; // useRouter for potential client-side nav if action fails before redirect
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useEffect, useState, useMemo } from 'react'; // Added useMemo
-import { CreateInterviewFormState, startNewInterviewAction } from '../actions'; // Ensure this path is correct
-import { toast } from 'sonner'; // For showing messages
-import { PiSpinner } from 'react-icons/pi'; // Assuming you have this for loading
-import { useFormState } from 'react-dom';
+import { useEffect, useState, useMemo } from 'react';
+import { startNewInterviewAction, type CreateInterviewFormState } from '../actions'; // Import action and state type
+import { toast } from 'sonner';
+import { PiSpinner } from 'react-icons/pi';
+import { useFormState, useFormStatus } from 'react-dom'; // Import both hooks
+import { cn } from '@/lib/utils'; // For conditional class names
 
 const initialState: CreateInterviewFormState = {
     success: false,
-    message: undefined, // Use undefined so initial toasts don't fire
+    message: undefined,
     error: undefined,
     sessionId: undefined,
 };
 
-export default function NewInterviewPage() {
-    const searchParams = useSearchParams();
-    const router = useRouter(); // For potential fallback navigation
+// Separate component for the submit button to use useFormStatus
+function SubmitButton() {
+    const { pending } = useFormStatus();
+    return (
+        <Button type="submit" className="w-full" aria-disabled={pending} disabled={pending}>
+            {pending && <PiSpinner className="mr-2 h-4 w-4 animate-spin" />}
+            {pending ? "Starting..." : "Begin Session"}
+        </Button>
+    );
+}
 
-    // Use useMemo for stability and clarity
+export default function NewInterviewPage() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+
     const initialTopicFromUrl = useMemo(() => searchParams.get('topic') || '', [searchParams]);
     const isTopicFromUrlFixed = useMemo(() => !!initialTopicFromUrl, [initialTopicFromUrl]);
 
-    // This state will hold the value for the input field
-    const [topicInputValue, setTopicInputValue] = useState(initialTopicFromUrl);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    useEffect(() => {
-        // If the URL parameter changes (e.g., browser back/forward), update the input field's value
-        setTopicInputValue(initialTopicFromUrl);
-    }, [initialTopicFromUrl]);
-
-    // const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    //     event.preventDefault(); // Prevent default form submission
-    //     setIsSubmitting(true);
-
-    //     const formData = new FormData(event.currentTarget); // Get form data
-
-    //     // Determine the actual topic to submit
-    //     // If fixed by URL, use that. Otherwise, use the (potentially empty) input value.
-    //     const topicToSubmit = isTopicFromUrlFixed ? initialTopicFromUrl : formData.get('topic_input_display')?.toString() || '';
-
-    //     // Create a new FormData to send to the action, ensuring 'topic' field is correct
-    //     const actionFormData = new FormData();
-    //     actionFormData.append('topic', topicToSubmit.trim() || 'General Tech Practice');
-
-    //     try {
-    //         // Server action `startNewInterviewAction` is expected to handle redirects on success/failure.
-    //         // If it returns a value (e.g., an error object), we won't easily get it here
-    //         // because the redirect will likely happen first.
-    //         // This is a limitation of not using useFormState for actions that redirect.
-    //         await startNewInterviewAction(actionFormData);
-    //         // If the action redirects, this line below might not be reached.
-    //         // If it doesn't redirect on error, we wouldn't know without a return value.
-    //         // For now, assume success if no error is thrown that prevents redirect.
-    //     } catch (error) {
-    //         // This catch block might not catch errors if the server action itself handles
-    //         // errors by redirecting (e.g., to a dashboard with an error query param).
-    //         // It would catch network errors or if the action throws an unhandled exception.
-    //         console.error("Error submitting form:", error);
-    //         toast.error("Failed to start interview. Please try again.");
-    //         setIsSubmitting(false);
-    //     }
-    //     // No need to setIsSubmitting(false) here if successful redirect, as component unmounts.
-    // };
+    // This state holds the value for the VISIBLE input field
+    const [topicDisplayValue, setTopicDisplayValue] = useState(initialTopicFromUrl);
 
     const [state, formAction] = useFormState(startNewInterviewAction, initialState);
 
     useEffect(() => {
+        // If URL parameter changes, update the visual input field's value
+        setTopicDisplayValue(initialTopicFromUrl);
+    }, [initialTopicFromUrl]);
+
+    useEffect(() => {
         if (state?.success && state.sessionId) {
-            toast(state.message || "Session started successfully!");
+            toast.success(state.message || "Session started successfully!");
             router.push(`/interview/${state.sessionId}?q=1`);
         } else if (state && !state.success && (state.error || state.message)) {
-            // This will catch the "You have reached your daily limit..." error
             toast.error(state.error || state.message || "Failed to start interview.");
         }
     }, [state, router]);
@@ -94,32 +68,52 @@ export default function NewInterviewPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <form action={formAction} className="space-y-6"> {/* Changed to onSubmit */}
-                    <div className='space-y-4'>
-                        <Label htmlFor="topic_input_display">Interview Topic</Label>
+                <form action={formAction} className="space-y-6">
+                    {/* 
+                        This hidden input ensures that the correct topic value is ALWAYS submitted
+                        to the server action under the name "topic".
+                        Its value is determined by whether the topic is fixed by the URL or editable.
+                    */}
+                    <input
+                        type="hidden"
+                        name="topic" // This name MUST MATCH what startNewInterviewAction expects (formData.get('topic'))
+                        value={isTopicFromUrlFixed ? initialTopicFromUrl : topicDisplayValue}
+                    />
+
+                    <div className="space-y-1.5"> {/* Adjusted spacing for label and input */}
+                        <Label htmlFor="topic_display_input">Interview Topic</Label>
                         <Input
-                            id="topic_input_display"
-                            name="topic_input_display" // Name for FormData if needed when editable
-                            value={topicInputValue}
-                            onChange={(e) => setTopicInputValue(e.target.value)}
-                            placeholder={isTopicFromUrlFixed ? "" : "e.g., Data Structures, System Design"}
-                            disabled={isTopicFromUrlFixed} // Disable if topic comes from URL
+                            id="topic_display_input"
+                            // The 'name' attribute for this visible input is not strictly necessary for form submission
+                            // if we rely on the hidden input. If kept, ensure it's different from the hidden input's name
+                            // or ensure your server action only reads the intended 'topic' field.
+                            // For simplicity, we can omit 'name' here or give it a distinct one.
+                            // name="topic_visual_for_user" 
+                            value={topicDisplayValue}
+                            onChange={(e) => {
+                                if (!isTopicFromUrlFixed) { // Only allow change if not fixed by URL
+                                    setTopicDisplayValue(e.target.value);
+                                }
+                            }}
+                            placeholder={isTopicFromUrlFixed ? initialTopicFromUrl : "e.g., Data Structures, System Design"}
+                            disabled={isTopicFromUrlFixed}
                             aria-readonly={isTopicFromUrlFixed}
-                            className={isTopicFromUrlFixed ? "bg-muted/50 cursor-not-allowed" : ""}
+                            className={cn(
+                                isTopicFromUrlFixed ? "bg-muted/70 cursor-not-allowed text-muted-foreground" : "",
+                            )}
                         />
                         {isTopicFromUrlFixed && (
-                            <p className="text-sm text-muted-foreground mt-1">
-                                Topic is set by previous selection. To choose a different topic or a general session, please start from the Interview Hub or Dashboard.
+                            <p className="text-sm text-muted-foreground pt-1">
+                                Topic is set by the previous selection.
                             </p>
                         )}
                         {!isTopicFromUrlFixed && (
-                            <p className="text-sm text-muted-foreground mt-1">Leave blank for general tech practice.</p>
+                             <p className="text-sm text-muted-foreground pt-1">Leave blank for general tech practice.</p>
                         )}
+                        {/* Example for field-specific errors from server action state */}
+                        {state?.fieldErrors?.topic && <p className="text-sm text-destructive mt-1">{state.fieldErrors.topic}</p>}
                     </div>
-                    <Button type="submit" className="w-full" disabled={isSubmitting}>
-                        {isSubmitting && <PiSpinner className="mr-2 h-4 w-4 animate-spin" />}
-                        {isSubmitting ? "Starting..." : "Begin Session"}
-                    </Button>
+                    <SubmitButton /> {/* Use the dedicated SubmitButton component */}
                 </form>
             </CardContent>
         </Card>

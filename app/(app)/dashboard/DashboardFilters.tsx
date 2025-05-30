@@ -81,7 +81,7 @@ export default function DashboardFilters({
 
     return (
         <div className="flex flex-col sm:flex-row gap-4 mb-6 p-4 border rounded-lg items-end">
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 w-full">
                 <Label htmlFor="topic-search" className="text-sm font-medium">Search by Topic</Label>
                 <Input
                     id="topic-search"

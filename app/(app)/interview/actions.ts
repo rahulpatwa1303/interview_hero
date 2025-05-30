@@ -42,64 +42,121 @@ if (!API_KEY) {
 const genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null;
 
 // Helper function to construct a detailed prompt
+// function constructPrompt(topic: string | null, userProfile: UserProfile | null, numberOfQuestions: number): string {
+//     let prompt = `You are an expert interviewer. Generate ${numberOfQuestions} interview questions suitable for a practice session.
+//     Ensure at least one question is a practical coding question or a conceptual question requiring code examples, if the topic or profile allows.
+//     If generating a coding question, specify its "question_type" as "coding_exercise" or "technical_coding_concept".
+//     The coding question should be solvable within a typical interview timeframe (e.g., 15-30 minutes of thought and coding).
+//     It can be a small algorithm, data structure manipulation, or a problem related to a specific technology if indicated by the profile or topic.
+//     For coding questions, provide only the problem statement. Do not provide the solution or hints in the question_text.
+
+//     `; // Added a newline for clarity
+
+//     if (topic && topic.trim() !== "") {
+//         prompt += `The interview topic is "${topic}". `;
+//         if (topic.toLowerCase().includes("data structures") || topic.toLowerCase().includes("dsa")) {
+//             prompt += `Focus heavily on data structures and algorithms questions, including coding exercises related to them. `;
+//         } else if (topic.toLowerCase().includes("system design")) {
+//             prompt += `Focus on system design principles, trade-offs, and designing scalable systems. `;
+//         }
+//     } else {
+//         prompt += "The interview is for general tech practice. ";
+//     }
+
+//     if (userProfile && userProfile.profile_complete) {
+//         prompt += "Consider the following candidate profile for tailoring the questions:\n";
+//         if (userProfile.years_of_experience) {
+//             prompt += `- Years of Experience: ${userProfile.years_of_experience}\n`;
+//         }
+//         if (userProfile.primary_tech_stack) {
+//             prompt += `- Primary Tech Stack: ${userProfile.primary_tech_stack}\n`;
+//         }
+//         if (userProfile.programming_languages && userProfile.programming_languages.length > 0) {
+//             prompt += `- Programming Languages: ${userProfile.programming_languages.join(', ')} (Consider these for coding questions if applicable)\n`;
+//         }
+//         if (userProfile.technologies && userProfile.technologies.length > 0) {
+//             prompt += `- Technologies/Frameworks: ${userProfile.technologies.join(', ')}\n`;
+//         }
+//         if (userProfile.target_roles && userProfile.target_roles.length > 0) {
+//             prompt += `- Target Roles: ${userProfile.target_roles.join(', ')}\n`;
+//         }
+//         prompt += "\n";
+//     } else {
+//         prompt += "The candidate has not provided detailed profile information, so lean towards more general questions related to the topic if provided, or general tech questions otherwise. Still try to include one general coding question.\n";
+//     }
+
+//     if (topic && (topic.toLowerCase().includes("data structures") || topic.toLowerCase().includes("coding") || topic.toLowerCase().includes("dsa"))) {
+//         prompt += `Ensure at least two questions are practical coding exercises related to ${topic}. `
+//     } else {
+//         prompt += `Ensure at least one question is a practical coding question or a conceptual question requiring code examples, if the topic or profile allows. `
+//     }
+
+//     prompt += `The questions should cover a mix of types.
+//     Question types can include: behavioral, technical_problem_solving, system_design, coding_exercise, technical_coding_concept, domain_specific_knowledge, situational.
+
+//     Format the output as a JSON array of objects, where each object has "question_text" and "question_type" keys.
+//     Example for a coding question:
+//     {"question_text": "Given an array of integers, write a function to find the pair of numbers that sum up to a specific target. What is its time complexity?", "question_type": "coding_exercise"}
+
+//     Generate exactly ${numberOfQuestions} questions. Ensure the output is valid JSON.`;
+
+//     return prompt;
+// }
+
+// app/(app)/interview/actions.ts
+
 function constructPrompt(topic: string | null, userProfile: UserProfile | null, numberOfQuestions: number): string {
-    let prompt = `You are an expert interviewer. Generate ${numberOfQuestions} interview questions suitable for a practice session.
-    Ensure at least one question is a practical coding question or a conceptual question requiring code examples, if the topic or profile allows.
-    If generating a coding question, specify its "question_type" as "coding_exercise" or "technical_coding_concept".
-    The coding question should be solvable within a typical interview timeframe (e.g., 15-30 minutes of thought and coding).
-    It can be a small algorithm, data structure manipulation, or a problem related to a specific technology if indicated by the profile or topic.
-    For coding questions, provide only the problem statement. Do not provide the solution or hints in the question_text.
+    const effectiveTopic = topic?.trim() && topic.trim().toLowerCase() !== 'general tech practice' ? topic.trim() : null;
 
-    `; // Added a newline for clarity
+    let prompt = `You are an expert interviewer. Generate ${numberOfQuestions} interview questions for a practice session.
 
-    if (topic && topic.trim() !== "") {
-        prompt += `The interview topic is "${topic}". `;
-        if (topic.toLowerCase().includes("data structures") || topic.toLowerCase().includes("dsa")) {
-            prompt += `Focus heavily on data structures and algorithms questions, including coding exercises related to them. `;
-        } else if (topic.toLowerCase().includes("system design")) {
-            prompt += `Focus on system design principles, trade-offs, and designing scalable systems. `;
+IMPORTANT: The primary focus for question generation should be the specified "Interview Topic".
+If an "Interview Topic" is provided, ensure the majority of questions, especially technical and coding questions, are directly relevant to that topic.
+The "Candidate Profile" should be used as secondary context, for tailoring behavioral questions, or for choosing specific examples within the topic if applicable, but it should NOT override the main "Interview Topic".
+
+`;
+
+    if (effectiveTopic) {
+        prompt += `Interview Topic: "${effectiveTopic}"\n`;
+        // Add specific instructions based on topic
+        if (effectiveTopic.toLowerCase().includes("flutter")) {
+            prompt += `For this Flutter topic, include questions about Dart, Flutter widgets, state management (Provider, BLoC, Riverpod), asynchronous programming in Dart, Flutter performance, and common Flutter development challenges. One coding question should be a small Flutter widget implementation or a Dart algorithm.\n`;
+        } else if (effectiveTopic.toLowerCase().includes("data structures") || effectiveTopic.toLowerCase().includes("dsa")) {
+            prompt += `For this Data Structures & Algorithms topic, focus heavily on data structure concepts, algorithm design, time/space complexity analysis, and include at least two coding exercises related to common data structures (arrays, linked lists, trees, graphs, hash tables) or algorithms (sorting, searching, dynamic programming).\n`;
+        } else if (effectiveTopic.toLowerCase().includes("system design")) {
+            prompt += `For this System Design topic, ask about designing scalable systems, architectural trade-offs, database choices, caching strategies, and distributed systems concepts. Avoid simple coding questions unless they are to illustrate a design principle.\n`;
         }
+        // Add more `else if` blocks for other common topics you want to specifically guide.
     } else {
-        prompt += "The interview is for general tech practice. ";
+        prompt += "Interview Topic: General Tech Practice\n";
+        prompt += "Since this is general practice, cover a range of common software engineering topics, including some behavioral, some data structures/algorithms concepts, and basic problem-solving.\n";
     }
 
     if (userProfile && userProfile.profile_complete) {
-        prompt += "Consider the following candidate profile for tailoring the questions:\n";
-        if (userProfile.years_of_experience) {
-            prompt += `- Years of Experience: ${userProfile.years_of_experience}\n`;
-        }
-        if (userProfile.primary_tech_stack) {
-            prompt += `- Primary Tech Stack: ${userProfile.primary_tech_stack}\n`;
-        }
+        prompt += "\nSecondary Context - Candidate Profile:\n";
+        if (userProfile.years_of_experience) prompt += `- Years of Experience: ${userProfile.years_of_experience}\n`;
+        if (userProfile.primary_tech_stack) prompt += `- Primary Tech Stack: ${userProfile.primary_tech_stack} (Use this for context, but prioritize the main Interview Topic if specified)\n`;
         if (userProfile.programming_languages && userProfile.programming_languages.length > 0) {
-            prompt += `- Programming Languages: ${userProfile.programming_languages.join(', ')} (Consider these for coding questions if applicable)\n`;
-        }
-        if (userProfile.technologies && userProfile.technologies.length > 0) {
-            prompt += `- Technologies/Frameworks: ${userProfile.technologies.join(', ')}\n`;
+            prompt += `- Known Languages: ${userProfile.programming_languages.join(', ')} (If the Interview Topic is a specific language, focus on that. Otherwise, these can inform general coding questions.)\n`;
         }
         if (userProfile.target_roles && userProfile.target_roles.length > 0) {
             prompt += `- Target Roles: ${userProfile.target_roles.join(', ')}\n`;
         }
-        prompt += "\n";
-    } else {
-        prompt += "The candidate has not provided detailed profile information, so lean towards more general questions related to the topic if provided, or general tech questions otherwise. Still try to include one general coding question.\n";
+        // Add more profile details if relevant for behavioral or general context
+    } else if (effectiveTopic) { // Topic specified, but no detailed profile
+        prompt += "\nCandidate has not provided a detailed profile. Focus questions primarily on the Interview Topic: " + `"${effectiveTopic}".\n`;
+    } else { // No topic, no profile
+        prompt += "\nCandidate has not provided a detailed profile. Ask general software engineering interview questions.\n";
     }
 
-    if (topic && (topic.toLowerCase().includes("data structures") || topic.toLowerCase().includes("coding") || topic.toLowerCase().includes("dsa"))) {
-        prompt += `Ensure at least two questions are practical coding exercises related to ${topic}. `
-    } else {
-        prompt += `Ensure at least one question is a practical coding question or a conceptual question requiring code examples, if the topic or profile allows. `
-    }
+    prompt += `
+Ensure a mix of question types. If a coding question is generated, its "question_type" should be "coding_exercise" or "technical_coding_concept".
+Other types can be: behavioral, technical_problem_solving, system_design, domain_specific_knowledge.
 
-    prompt += `The questions should cover a mix of types.
-    Question types can include: behavioral, technical_problem_solving, system_design, coding_exercise, technical_coding_concept, domain_specific_knowledge, situational.
-    
-    Format the output as a JSON array of objects, where each object has "question_text" and "question_type" keys.
-    Example for a coding question:
-    {"question_text": "Given an array of integers, write a function to find the pair of numbers that sum up to a specific target. What is its time complexity?", "question_type": "coding_exercise"}
-    
-    Generate exactly ${numberOfQuestions} questions. Ensure the output is valid JSON.`;
-
+Format the output as a JSON array of objects, where each object has "question_text" and "question_type" keys.
+Generate exactly ${numberOfQuestions} questions. Ensure the output is valid JSON.
+The most important instruction is to prioritize the specified "Interview Topic" over the candidate's general profile if a topic is given.
+`;
     return prompt;
 }
 
@@ -785,7 +842,7 @@ export async function endInterviewSessionEarlyAction(sessionId: string): Promise
     }
 }
 
-export async function getUserDailySessionCount(): Promise<{count: number | null, error?: string}> {
+export async function getUserDailySessionCount(): Promise<{ count: number | null, error?: string }> {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
 

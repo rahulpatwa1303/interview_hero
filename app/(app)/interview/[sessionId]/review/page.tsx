@@ -14,9 +14,10 @@ type Question = Database['public']['Tables']['interview_questions']['Row'];
 type UserAnswer = Database['public']['Tables']['user_answers']['Row'];
 type AIAnalysis = Database['public']['Tables']['ai_analysis_results']['Row'];
 type UserProfile = Database['public']['Tables']['users']['Row'];
-
 interface QuestionWithAnswerAndAnalysis extends Question {
-    user_answers: (UserAnswer & { ai_analysis_results: AIAnalysis | null })[]; // User's answer for this question (should be one)
+    user_answers: UserAnswer & {
+        ai_analysis_results: AIAnalysis | null;
+    };
 }
 
 interface SessionForReview extends Session {
@@ -27,7 +28,7 @@ interface SessionForReview extends Session {
 
 interface InterviewReviewPageProps {
     params: Promise<{ sessionId: string; }>;
-  }
+}
 
 async function getAnalyzedSessionData(sessionId: string, userId: string): Promise<SessionForReview | null> {
     const supabase = createClient();
@@ -36,11 +37,14 @@ async function getAnalyzedSessionData(sessionId: string, userId: string): Promis
         .select(`
             *,
             users (*),
-            overall_analysis, 
+            overall_analysis,
             interview_questions (
-                *,
-                user_answers!inner ( 
-                    *,
+                id, question_text, question_type, order_index, session_id, created_at, 
+                user_answers (
+                    id,
+                    answer_text,
+                    metadata,
+                    user_id,
                     ai_analysis_results (*)
                 )
             )
@@ -80,7 +84,7 @@ async function getAnalyzedSessionData(sessionId: string, userId: string): Promis
 }
 
 
-export default async function InterviewReviewPage({ params }: InterviewReviewPageProps)  {
+export default async function InterviewReviewPage({ params }: InterviewReviewPageProps) {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -154,8 +158,10 @@ export default async function InterviewReviewPage({ params }: InterviewReviewPag
                     {sessionData.interview_questions && sessionData.interview_questions.length > 0 ? (
                         <Accordion type="single" collapsible className="w-full space-y-3">
                             {sessionData.interview_questions.map((qwa, index) => {
-                                const userAnswer = qwa.user_answers && qwa.user_answers.length > 0 ? qwa.user_answers[0] : null;
-                                const analysis = userAnswer?.ai_analysis_results;
+                                console.log('qwa', JSON.stringify(qwa))
+                                const userAnswer = qwa.user_answers?.answer_text ?? null;
+
+                                const analysis = qwa.user_answers?.ai_analysis_results;
                                 // Parse analysis_text if it's stored as stringified JSON
                                 let evaluation: { rating?: string; good_points?: string[]; suggestions?: string[] } | null = null;
                                 if (analysis?.analysis_text) {
@@ -171,7 +177,6 @@ export default async function InterviewReviewPage({ params }: InterviewReviewPag
                                         suggestions: analysis.suggestions?.split('\n- ').filter(p => p.trim() !== '') || [],
                                     };
                                 }
-
 
                                 return (
                                     <AccordionItem value={`item-${index}`} key={qwa.id} className="border px-4 rounded-lg">
@@ -192,8 +197,8 @@ export default async function InterviewReviewPage({ params }: InterviewReviewPag
                                             <Separator />
                                             <div>
                                                 <h4 className="font-semibold mb-1 text-primary/80">Your Answer:</h4>
-                                                {userAnswer?.answer_text ? (
-                                                    <p className="text-muted-foreground whitespace-pre-line">{userAnswer.answer_text}</p>
+                                                {userAnswer ? (
+                                                    <p className="text-muted-foreground whitespace-pre-line">{userAnswer}</p>
                                                 ) : (
                                                     <p className="text-sm text-muted-foreground italic">No answer provided.</p>
                                                 )}
