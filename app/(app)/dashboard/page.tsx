@@ -18,32 +18,63 @@ import DashboardFilters from './DashboardFilters';
 // ScrollArea and ScrollBar are not needed for the card grid directly
 // import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
-// Define types for props and searchParams
+async function ensureOldSessionsCompleted(userId: string, supabaseClient: any) { // Pass supabaseClient
+  const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+  const { error: updateError } = await supabaseClient
+    .from('interview_sessions')
+    .update({ status: 'completed', completed_at: new Date().toISOString() })
+    .eq('user_id', userId)
+    .eq('status', 'in_progress')
+    .lt('started_at', threeHoursAgo);
+
+  if (updateError) {
+    console.error("Dashboard: Error auto-completing old sessions:", updateError.message);
+  }
+}
+
 type DashboardPageProps = {
-  searchParams?: { [key: string]: string | string[] | undefined }; // Simplified for direct access
+  // params?: { /* if you had dynamic route params */ };
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-async function ensureOldSessionsCompleted(userId: string, supabaseClient: any) { /* ... same ... */ }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  // const { page,limit,status,topic } = await searchParams; 
   const supabase = createClient();
+
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) return redirect('/login?message=You need to be logged in.');
+  if (!user) {
+    // This should ideally be caught by the (app)/layout.tsx
+    return redirect('/login?message=You need to be logged in.');
+  }
+
   await ensureOldSessionsCompleted(user.id, supabase);
-  const { data: userProfile } = await supabase.from('users').select('profile_complete').eq('id', user.id).single();
-  if (!userProfile?.profile_complete) return redirect('/profile/setup?message=Please complete your profile');
+  // Check if profile is complete (also done in layout, but good for direct page access logic)
+  const { data: userProfile, error: profileErrorCheck } = await supabase
+    .from('users')
+    .select('profile_complete')
+    .eq('id', user.id)
+    .single();
 
-  const getStringParam = (param: string | string[] | undefined): string => {
-    if (Array.isArray(param)) return param[0] || '';
-    return param || '';
+  if (profileErrorCheck && profileErrorCheck.code !== 'PGRST116') {
+    console.error("Dashboard: Error fetching profile status", profileErrorCheck);
+    // Handle error appropriately
+  }
+  if (!userProfile?.profile_complete) {
+    return redirect('/profile/setup?message=Please complete your profile to view the dashboard.');
+  }
+
+  const getString = (value: string | string[] | undefined): string => {
+    if (Array.isArray(value)) return value[0] || '';
+    return value || '';
   };
-
-  const currentPage = parseInt(getStringParam(searchParams?.page) || '1', 10);
-  const limit = parseInt(getStringParam(searchParams?.limit) || ITEMS_PER_PAGE.toString(), 10);
-  const statusFilter = getStringParam(searchParams?.status);
-  const topicSearch = getStringParam(searchParams?.topic);
-
+  
+  const currentPage = parseInt(getString((await searchParams)?.page) || '1', 10);
+  const limit = parseInt(getString((await searchParams)?.limit) || ITEMS_PER_PAGE.toString(), 10);
+  const statusFilter = getString((await searchParams)?.status);
+  const topicSearch = getString((await searchParams)?.topic);
+  
   const from = (currentPage - 1) * limit;
   const to = from + limit - 1;
 
