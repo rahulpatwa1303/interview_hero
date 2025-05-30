@@ -15,7 +15,30 @@ import TestimonialsSection from '@/components/landing/TestimonialsSection';
 import FinalCTASection from '@/components/landing/FinalCTASection';
 import Footer from '@/components/landing/Footer';
 import InteractiveDemo from '@/components/landing/InteractiveDemo';
+import { Metadata } from 'next';
 // import { Button } from '@/components/ui/button'; // For global "Get Started" if needed in Navbar
+
+export const metadata: Metadata = {
+  title: 'Interview Hero: AI Mock Interview Practice & Coaching', // Specific title
+  description: 'Ace your technical interviews with AI-driven mock interviews, personalized questions, and instant feedback. Prepare for coding, system design, and behavioral rounds with Interview Hero.',
+  alternates: { // If this is your canonical homepage
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'Interview Hero: AI Mock Interview Practice & Coaching',
+    description: 'The best way to prepare for your next tech interview with AI.',
+    url: 'https://interview-hero-e4hl.vercel.app', // Canonical URL of THIS page
+    // images: [ // You can specify a different OG image for the homepage if desired
+    //   {
+    //     url: 'https://interview-hero-e4hl.vercel.app/homepage-og-image.png',
+    //     width: 1200,
+    //     height: 630,
+    //   },
+    // ],
+  },
+  // Add other specific metadata like keywords if desired
+};
+
 
 export default function LandingPage() {
   return (
