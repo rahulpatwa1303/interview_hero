@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -8,31 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          operationName?: string
-          query?: string
-          variables?: Json
-          extensions?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       ai_analysis_results: {
@@ -91,6 +65,80 @@ export type Database = {
           id?: number
           ip_address?: string
           route?: string
+        }
+        Relationships: []
+      }
+      coding_challenge_test_cases: {
+        Row: {
+          challenge_id: string | null
+          expected_output: Json
+          explanation: string | null
+          id: string
+          input: Json
+          is_hidden: boolean | null
+        }
+        Insert: {
+          challenge_id?: string | null
+          expected_output: Json
+          explanation?: string | null
+          id?: string
+          input: Json
+          is_hidden?: boolean | null
+        }
+        Update: {
+          challenge_id?: string | null
+          expected_output?: Json
+          explanation?: string | null
+          id?: string
+          input?: Json
+          is_hidden?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coding_challenge_test_cases_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "coding_challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coding_challenges: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          default_language: string | null
+          difficulty: string | null
+          id: string
+          initial_code_snippet: Json | null
+          problem_statement: string
+          source: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          default_language?: string | null
+          difficulty?: string | null
+          id?: string
+          initial_code_snippet?: Json | null
+          problem_statement: string
+          source?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          default_language?: string | null
+          difficulty?: string | null
+          id?: string
+          initial_code_snippet?: Json | null
+          problem_statement?: string
+          source?: string | null
+          title?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -202,6 +250,64 @@ export type Database = {
           },
           {
             foreignKeyName: "user_answers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_coding_challenge_submissions: {
+        Row: {
+          ai_feedback_id: string | null
+          challenge_id: string | null
+          code_submission: string
+          id: string
+          language: string
+          status: string
+          submitted_at: string | null
+          test_case_results: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          ai_feedback_id?: string | null
+          challenge_id?: string | null
+          code_submission: string
+          id?: string
+          language: string
+          status: string
+          submitted_at?: string | null
+          test_case_results?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          ai_feedback_id?: string | null
+          challenge_id?: string | null
+          code_submission?: string
+          id?: string
+          language?: string
+          status?: string
+          submitted_at?: string | null
+          test_case_results?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_coding_challenge_submissions_ai_feedback_id_fkey"
+            columns: ["ai_feedback_id"]
+            isOneToOne: false
+            referencedRelation: "ai_analysis_results"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_coding_challenge_submissions_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "coding_challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_coding_challenge_submissions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -385,9 +491,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },
